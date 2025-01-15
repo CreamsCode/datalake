@@ -1,0 +1,28 @@
+# Ignorar archivos temporales
+*.log
+*.tmp
+
+# Ignorar archivos de configuración del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar dependencias de Node.js
+node_modules/
+
+# Ignorar entornos virtuales de Python
+venv/
+__pycache__/
+.idea/
+
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+terraform.lock.hcl
+.terraform.lock.hcl
+
+
+
+# Ignorar archivos de compilación
+*.class
+*.o
+*.exe

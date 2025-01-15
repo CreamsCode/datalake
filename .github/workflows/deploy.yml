@@ -1,0 +1,84 @@
+name: Deploy MongoDB Cluster on AWS
+
+on:
+  push:
+    branches:
+      - main
+workflow_dispatch:
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve
+
+      - name: Export Outputs
+        run: echo "CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)" >> $GITHUB_ENV && \
+             echo "MONGOS_IP=$(terraform output -raw mongos_ip)" >> $GITHUB_ENV && \
+             echo "SHARD_IPS=$(terraform output -json shard_ips)" >> $GITHUB_ENV
+
+  test-mongodb-cluster:
+    name: Test MongoDB Cluster
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+
+    steps:
+      - name: Get Cluster IPs
+        run: echo "Using CONFIG_SERVER_IP=$CONFIG_SERVER_IP, MONGOS_IP=$MONGOS_IP, SHARD_IPS=$SHARD_IPS"
+
+      - name: Install MongoDB Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mongodb-clients jq
+
+      - name: Initialize Replica Sets on Shards
+        run: |
+          for ip in $(echo $SHARD_IPS | jq -r '.[]'); do
+            mongo --host $ip:27017 --eval "rs.initiate()"
+          done
+
+      - name: Configure Shards on Mongos
+        run: |
+          for ip in $(echo $SHARD_IPS | jq -r '.[]'); do
+            mongo --host $MONGOS_IP:27017 --eval "sh.addShard('$ip:27017')"
+          done
+
+      - name: Enable Sharding for Database
+        run: |
+          mongo --host $MONGOS_IP:27017 --eval "sh.enableSharding('my_database')"
+
+      - name: Test Config Server Connection
+        run: |
+          mongo --host $CONFIG_SERVER_IP:27017 --eval "db.stats()"
+
+      - name: Test Mongos Connection
+        run: |
+          mongo --host $MONGOS_IP:27017 --eval "sh.status()"
+
+      - name: Test Shards Connection
+        run: |
+          for ip in $(echo $SHARD_IPS | jq -r '.[]'); do
+            mongo --host $ip:27017 --eval "db.stats()"
+          done
