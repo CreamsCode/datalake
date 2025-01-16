@@ -57,11 +57,10 @@ jobs:
         run: |
           CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)
           MONGOS_IP=$(terraform output -raw mongos_ip)
-          SHARD_IPS=$(terraform output -json shard_ips)
+          SHARD_IPS=$(terraform output -json shard_ips | jq -c '.')
           echo "CONFIG_SERVER_IP=${CONFIG_SERVER_IP}" >> $GITHUB_ENV
           echo "MONGOS_IP=${MONGOS_IP}" >> $GITHUB_ENV
           echo "SHARD_IPS=${SHARD_IPS}" >> $GITHUB_ENV
-  
 
   test-mongodb-cluster:
     name: Test MongoDB Cluster
@@ -90,5 +89,24 @@ jobs:
           done
 
       - name: Enable Sharding for Database
+        run: mongo --host $MONGOS_IP:27017 --eval "sh.enableSharding('my_database')"
+
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, test-mongodb-cluster]
+    if: failure()
+
+    steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Destroy Terraform Resources
         run: |
-          mongo --host $M
+          terraform init
+          terraform destroy -auto-approve
