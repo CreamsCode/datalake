@@ -68,7 +68,6 @@ jobs:
         run: |
           # Capturar los valores de Terraform
           bucket_name=$(terraform output -raw backend_bucket_name 2>/dev/null || echo "ERROR")
-          region=$(terraform output -raw backend_region 2>/dev/null || echo "ERROR")
           key=$(terraform output -raw backend_key 2>/dev/null || echo "ERROR")
 
           # Validar que las variables no estén vacías o contengan errores
@@ -79,7 +78,7 @@ jobs:
 
           # Escribir los valores en GITHUB_OUTPUT
           echo "bucket_name=$bucket_name" >> $GITHUB_OUTPUT
-          echo "region=$region" >> $GITHUB_OUTPUT
+          echo "region=us-east-1" >> $GITHUB_OUTPUT
           echo "key=$key" >> $GITHUB_OUTPUT
 
   deploy-infrastructure:
