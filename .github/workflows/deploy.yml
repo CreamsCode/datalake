@@ -56,6 +56,13 @@ jobs:
       - name: Create Backend Resources
         run: terraform apply -auto-approve -target=null_resource.create_bucket_and_upload
 
+      - name: Debug Terraform Output
+        run: |
+          terraform output -raw backend_bucket_name
+          terraform output -raw backend_region
+          terraform output -raw backend_key
+
+
       - name: Get Backend Outputs
         id: get-backend
         run: |
