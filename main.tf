@@ -110,7 +110,7 @@ resource "aws_instance" "config_server" {
   instance_type = "t2.micro"
   key_name      = "vockey"
   subnet_id     = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.mongodb_sg.id]
+  vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
     Name = "MongoDB-Config-Server"
@@ -140,7 +140,7 @@ resource "aws_instance" "mongos_router" {
   instance_type = "t2.micro"
   key_name      = "vockey"
   subnet_id     = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.mongodb_sg.id]
+  vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
     Name = "MongoDB-Mongos"
@@ -171,7 +171,7 @@ resource "aws_instance" "shard" {
   instance_type = "t2.micro"
   key_name      = "vockey"
   subnet_id     = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.mongodb_sg.id]
+  vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
     Name = "MongoDB-Shard-${count.index + 1}"
