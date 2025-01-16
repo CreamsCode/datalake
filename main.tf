@@ -15,16 +15,6 @@ resource "aws_subnet" "public_subnet" {
   }
 }
 
-resource "aws_subnet" "private_subnet" {
-  vpc_id                  = aws_vpc.main_vpc.id
-  cidr_block              = "10.0.2.0/24"
-  map_public_ip_on_launch = false
-  availability_zone       = "us-east-1a"
-  tags = {
-    Name = "PrivateSubnet"
-  }
-}
-
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.main_vpc.id
   tags = {
@@ -100,8 +90,7 @@ resource "aws_security_group" "listener_security" {
   }
 }
 
-# Instances: Config Server, Mongos, Shards
-resource "aws_instance" "config_server" {
+resource "aws_instance" "mongodb_server" {
   ami           = "ami-05576a079321f21f8"
   instance_type = "t2.micro"
   key_name      = "vockey"
@@ -109,7 +98,7 @@ resource "aws_instance" "config_server" {
   vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
-    Name = "MongoDB-Config-Server"
+    Name = "MongoDB-Server"
   }
   user_data = <<-EOF
     #!/bin/bash
@@ -125,68 +114,6 @@ resource "aws_instance" "config_server" {
     sudo chown -R mongod:mongod /var/log/mongodb
     sudo chmod 700 /var/lib/mongo
     sudo chmod 700 /var/log/mongodb
-    echo "sharding.clusterRole: configsvr" | sudo tee -a /etc/mongod.conf
-    sudo systemctl enable mongod
-    sudo systemctl start mongod
-  EOF
-}
-
-resource "aws_instance" "mongos_router" {
-  ami           = "ami-05576a079321f21f8"
-  instance_type = "t2.micro"
-  key_name      = "vockey"
-  subnet_id     = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
-  iam_instance_profile   = "EMR_EC2_DefaultRole"
-  tags = {
-    Name = "MongoDB-Mongos"
-  }
-  user_data = <<-EOF
-    #!/bin/bash
-    echo '[mongodb-org-8.0]' | sudo tee /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'name=MongoDB Repository' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'gpgcheck=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'enabled=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'gpgkey=https://pgp.mongodb.com/server-8.0.asc' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    dnf install -y mongodb-org mongodb-mongosh-shared-openssl3 openssl mongodb-org-database-tools-extra mongodb-database-tools mongodb-org-tools mongodb-org-server mongodb-org-mongos mongodb-org-database jq
-    sudo rm -f /tmp/mongodb-27017.sock
-    sudo chown -R mongod:mongod /var/lib/mongo
-    sudo chown -R mongod:mongod /var/log/mongodb
-    sudo chmod 700 /var/lib/mongo
-    sudo chmod 700 /var/log/mongodb
-    echo "sharding.clusterRole: mongos" | sudo tee -a /etc/mongod.conf
-    sudo systemctl enable mongod
-    sudo systemctl start mongod
-  EOF
-}
-
-resource "aws_instance" "shard" {
-  count         = 3
-  ami           = "ami-05576a079321f21f8"
-  instance_type = "t2.micro"
-  key_name      = "vockey"
-  subnet_id     = aws_subnet.public_subnet.id
-  vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
-  iam_instance_profile   = "EMR_EC2_DefaultRole"
-  tags = {
-    Name = "MongoDB-Shard-${count.index + 1}"
-  }
-  user_data = <<-EOF
-    #!/bin/bash
-    echo '[mongodb-org-8.0]' | sudo tee /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'name=MongoDB Repository' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'gpgcheck=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'enabled=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    echo 'gpgkey=https://pgp.mongodb.com/server-8.0.asc' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-    dnf install -y mongodb-org mongodb-mongosh-shared-openssl3 openssl mongodb-org-database-tools-extra mongodb-database-tools mongodb-org-tools mongodb-org-server mongodb-org-mongos mongodb-org-database jq
-    sudo rm -f /tmp/mongodb-27017.sock
-    sudo chown -R mongod:mongod /var/lib/mongo
-    sudo chown -R mongod:mongod /var/log/mongodb
-    sudo chmod 700 /var/lib/mongo
-    sudo chmod 700 /var/log/mongodb
-    echo "sharding.clusterRole: shardsvr" | sudo tee -a /etc/mongod.conf
     sudo systemctl enable mongod
     sudo systemctl start mongod
   EOF
