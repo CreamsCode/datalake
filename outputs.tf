@@ -9,3 +9,14 @@ output "mongos_ip" {
 output "shard_ips" {
   value = aws_instance.shard[*].public_ip
 }
+output "backend_bucket_name" {
+  value = "${var.bucket_name}-${random_string.suffix.result}"
+}
+
+output "backend_region" {
+  value = var.region
+}
+
+output "backend_key" {
+  value = "terraform/state/terraform.tfstate"
+}
