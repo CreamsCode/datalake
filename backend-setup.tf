@@ -1,6 +1,5 @@
 resource "aws_s3_bucket" "terraform_state_bucket" {
   bucket = "mi-terraform-backend-${random_string.suffix.result}"
-  acl    = "private"
 
   tags = {
     Name = "Terraform State Bucket"
@@ -18,22 +17,6 @@ resource "aws_s3_bucket_versioning" "versioning" {
 
   versioning_configuration {
     status = "Enabled"
-  }
-}
-
-
-resource "aws_dynamodb_table" "terraform_locks" {
-  name         = "terraform-locks"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name = "Terraform Locks Table"
   }
 }
 
