@@ -59,10 +59,18 @@ jobs:
       - name: Get Backend Outputs
         id: get-backend
         run: |
-          bucket_name=$(terraform output -raw backend_bucket_name | sed 's/[^a-zA-Z0-9-]//g')
-          region=$(terraform output -raw backend_region | sed 's/[^a-zA-Z0-9-]//g')
-          key=$(terraform output -raw backend_key | sed 's/[^a-zA-Z0-9-/]//g')
-
+          # Capturar los valores de Terraform
+          bucket_name=$(terraform output -raw backend_bucket_name 2>/dev/null | sed 's/[^a-zA-Z0-9_-]//g')
+          region=$(terraform output -raw backend_region 2>/dev/null | sed 's/[^a-zA-Z0-9_-]//g')
+          key=$(terraform output -raw backend_key 2>/dev/null | sed 's/[^a-zA-Z0-9_/-]//g')
+      
+          # Validar que las variables no estén vacías
+          if [ -z "$bucket_name" ] || [ -z "$region" ] || [ -z "$key" ]; then
+            echo "Error: Uno de los valores obtenidos está vacío." >&2
+            exit 1
+          fi
+      
+          # Escribir los valores en GITHUB_OUTPUT
           echo "bucket_name=$bucket_name" >> $GITHUB_OUTPUT
           echo "region=$region" >> $GITHUB_OUTPUT
           echo "key=$key" >> $GITHUB_OUTPUT
