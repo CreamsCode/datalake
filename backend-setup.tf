@@ -1,15 +1,26 @@
 resource "aws_s3_bucket" "terraform_state_bucket" {
-  bucket = "mi-terraform-backend"
+  bucket = "mi-terraform-backend-${random_string.suffix.result}"
   acl    = "private"
-
-  versioning {
-    enabled = true
-  }
 
   tags = {
     Name = "Terraform State Bucket"
   }
 }
+
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.terraform_state_bucket.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = "terraform-locks"

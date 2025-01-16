@@ -96,7 +96,7 @@ jobs:
           terraform init -backend-config="bucket=${{ needs.create-backend-resources.outputs.bucket_name }}" \
                          -backend-config="key=${{ needs.create-backend-resources.outputs.key }}" \
                          -backend-config="region=${{ needs.create-backend-resources.outputs.region }}" \
-                         -reconfigur
+                         -reconfigure
 
   
       - name: Terraform Apply
