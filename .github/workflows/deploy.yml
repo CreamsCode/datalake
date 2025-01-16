@@ -55,12 +55,19 @@ jobs:
       - name: Export Outputs
         shell: bash
         run: |
-          CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)
-          MONGOS_IP=$(terraform output -raw mongos_ip)
-          SHARD_IPS=$(terraform output -json shard_ips | jq -c '.')
+          CONFIG_SERVER_IP=$(terraform output -raw config_server_ip || echo "")
+          MONGOS_IP=$(terraform output -raw mongos_ip || echo "")
+          SHARD_IPS=$(terraform output -json shard_ips || echo "[]")
+      
+          if [[ -z "$CONFIG_SERVER_IP" || -z "$MONGOS_IP" || -z "$SHARD_IPS" ]]; then
+            echo "Error: Missing Terraform outputs"
+            exit 1
+          fi
+      
           echo "CONFIG_SERVER_IP=${CONFIG_SERVER_IP}" >> $GITHUB_ENV
           echo "MONGOS_IP=${MONGOS_IP}" >> $GITHUB_ENV
           echo "SHARD_IPS=${SHARD_IPS}" >> $GITHUB_ENV
+
 
   test-mongodb-cluster:
     name: Test MongoDB Cluster
@@ -105,6 +112,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
       - name: Destroy Terraform Resources
         run: |
