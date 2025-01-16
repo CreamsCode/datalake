@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_s3_bucket" "terraform_state_bucket" {
   bucket = "mi-terraform-backend"
   acl    = "private"
