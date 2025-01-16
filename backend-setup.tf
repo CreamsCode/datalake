@@ -18,11 +18,11 @@ resource "null_resource" "create_bucket_and_upload" {
   provisioner "local-exec" {
     command = <<EOT
       bucket_name=${var.bucket_name}-${random_string.suffix.result}
-      if aws s3api head-bucket --bucket ${var.bucket_name} 2>/dev/null; then
-        echo "El bucket ${var.bucket_name} ya existe. No se necesita crear nuevamente."
+      if aws s3api head-bucket --bucket $bucket_name 2>/dev/null; then
+        echo "El bucket $bucket_name ya existe. No se necesita crear nuevamente."
       else
-        echo "Creando el bucket ${var.bucket_name}..."
-        aws s3api create-bucket --bucket ${var.bucket_name} --region ${var.region}
+        echo "Creando el bucket $bucket_name..."
+        aws s3api create-bucket --bucket $bucket_name --region ${var.region}
       fi
     EOT
   }
