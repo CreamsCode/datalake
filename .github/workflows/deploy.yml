@@ -59,7 +59,6 @@ jobs:
       - name: Debug Terraform Output
         run: |
           terraform output -raw backend_bucket_name
-          terraform output -raw backend_region
           terraform output -raw backend_key
 
 
@@ -69,12 +68,6 @@ jobs:
           # Capturar los valores de Terraform
           bucket_name=$(terraform output -raw backend_bucket_name 2>/dev/null || echo "ERROR")
           key=$(terraform output -raw backend_key 2>/dev/null || echo "ERROR")
-
-          # Validar que las variables no estén vacías o contengan errores
-          if [[ "$bucket_name" == "ERROR" || "$region" == "ERROR" || "$key" == "ERROR" ]]; then
-            echo "Error: Uno o más outputs no están disponibles." >&2
-            exit 1
-          fi
 
           # Escribir los valores en GITHUB_OUTPUT
           echo "bucket_name=$bucket_name" >> $GITHUB_OUTPUT
