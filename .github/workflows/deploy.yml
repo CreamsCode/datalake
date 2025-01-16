@@ -54,7 +54,7 @@ jobs:
         run: terraform init -backend=false
 
       - name: Create Backend Resources
-        run: terraform apply -auto-approve -target=aws_s3_bucket.terraform_state_bucket
+        run: terraform apply -auto-approve -target=null_resource.create_bucket_and_upload
 
       - name: Get Backend Outputs
         id: get-backend
