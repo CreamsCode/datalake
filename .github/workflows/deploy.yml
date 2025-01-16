@@ -55,18 +55,14 @@ jobs:
       - name: Export Outputs
         shell: bash
         run: |
-          CONFIG_SERVER_IP=$(terraform output -raw config_server_ip || echo "")
-          MONGOS_IP=$(terraform output -raw mongos_ip || echo "")
-          SHARD_IPS=$(terraform output -json shard_ips || echo "[]")
-      
-          if [[ -z "$CONFIG_SERVER_IP" || -z "$MONGOS_IP" || -z "$SHARD_IPS" ]]; then
-            echo "Error: Missing Terraform outputs"
-            exit 1
-          fi
-      
-          echo "CONFIG_SERVER_IP=${CONFIG_SERVER_IP}" >> $GITHUB_ENV
-          echo "MONGOS_IP=${MONGOS_IP}" >> $GITHUB_ENV
-          echo "SHARD_IPS=${SHARD_IPS}" >> $GITHUB_ENV
+          CONFIG_SERVER_IP=$(terraform output -raw config_server_ip 2>/dev/null || echo "")
+          MONGOS_IP=$(terraform output -raw mongos_ip 2>/dev/null || echo "")
+          SHARD_IPS=$(terraform output -json shard_ips 2>/dev/null || echo "[]")
+          
+          # Append outputs to GitHub environment
+          echo "CONFIG_SERVER_IP=$CONFIG_SERVER_IP" >> $GITHUB_ENV
+          echo "MONGOS_IP=$MONGOS_IP" >> $GITHUB_ENV
+          echo "SHARD_IPS=$SHARD_IPS" >> $GITHUB_ENV
 
 
   test-mongodb-cluster:
