@@ -59,9 +59,13 @@ jobs:
       - name: Get Backend Outputs
         id: get-backend
         run: |
-          echo "bucket_name=$(terraform output -raw backend_bucket_name)" >> $GITHUB_OUTPUT
-          echo "region=$(terraform output -raw backend_region)" >> $GITHUB_OUTPUT
-          echo "key=$(terraform output -raw backend_key)" >> $GITHUB_OUTPUT
+          bucket_name=$(terraform output -raw backend_bucket_name | sed 's/[^a-zA-Z0-9-]//g')
+          region=$(terraform output -raw backend_region | sed 's/[^a-zA-Z0-9-]//g')
+          key=$(terraform output -raw backend_key | sed 's/[^a-zA-Z0-9-/]//g')
+
+          echo "bucket_name=$bucket_name" >> $GITHUB_OUTPUT
+          echo "region=$region" >> $GITHUB_OUTPUT
+          echo "key=$key" >> $GITHUB_OUTPUT
 
   deploy-infrastructure:
     name: Deploy Infrastructure
