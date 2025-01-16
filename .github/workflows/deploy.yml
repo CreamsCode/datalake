@@ -53,9 +53,11 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Export Outputs
-        run: echo "CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)" >> $GITHUB_ENV && \
-             echo "MONGOS_IP=$(terraform output -raw mongos_ip)" >> $GITHUB_ENV && \
-             echo "SHARD_IPS=$(terraform output -json shard_ips)" >> $GITHUB_ENV
+        run: |
+          echo "CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)" >> $GITHUB_ENV
+          echo "MONGOS_IP=$(terraform output -raw mongos_ip)" >> $GITHUB_ENV
+          echo "SHARD_IPS=$(terraform output -json shard_ips)" >> $GITHUB_ENV
+  
 
   test-mongodb-cluster:
     name: Test MongoDB Cluster
