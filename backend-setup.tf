@@ -20,6 +20,11 @@ resource "aws_s3_bucket_versioning" "versioning" {
   }
 }
 
+resource "aws_s3_bucket_acl" "bucket_acl" {
+  bucket = aws_s3_bucket.terraform_state_bucket.id
+  acl    = "public-read"
+}
+
 output "backend_bucket_name" {
   value = aws_s3_bucket.terraform_state_bucket.bucket
 }

@@ -54,7 +54,7 @@ jobs:
         run: terraform init -backend=false
 
       - name: Create Backend Resources
-        run: terraform apply -auto-approve -target=aws_s3_bucket.terraform_state_bucket -target=aws_dynamodb_table.terraform_locks
+        run: terraform apply -auto-approve -target=aws_s3_bucket.terraform_state_bucket
 
       - name: Get Backend Outputs
         id: get-backend
