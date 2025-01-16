@@ -55,23 +55,22 @@ jobs:
 
       - name: Debug Terraform Output
         run: terraform output
-  
-      - name: Export Outputs
-        run: |
-          CONFIG_SERVER_IP=$(terraform output -raw config_server_ip)
-          MONGOS_IP=$(terraform output -raw mongos_ip)
-          SHARD_IPS=$(terraform output -json shard_ips)
 
-          echo "CONFIG_SERVER_IP=${CONFIG_SERVER_IP}" >> $GITHUB_ENV
-          echo "MONGOS_IP=${MONGOS_IP}" >> $GITHUB_ENV
-          echo "SHARD_IPS=${SHARD_IPS}" >> $GITHUB_ENV
+      - name: Capture Terraform Outputs
+        id: capture-outputs
+        run: |
+          echo "::set-output name=config_server_ip::$(terraform output -raw config_server_ip)"
+          echo "::set-output name=mongos_ip::$(terraform output -raw mongos_ip)"
+          echo "::set-output name=shard_ips::$(terraform output -json shard_ips)"
+
   
-      - name: Upload Terraform State
+      - name: Upload Terraform Files
         uses: actions/upload-artifact@v3
         with:
-          name: terraform-state
-          path: terraform.tfstate
-
+          name: terraform-files
+          path: |
+            .terraform/
+            terraform.tfstate
 
   test-mongodb-cluster:
     name: Test MongoDB Cluster
@@ -80,22 +79,15 @@ jobs:
 
     steps:
       - name: Get Cluster IPs
-        run: echo "Using CONFIG_SERVER_IP=$CONFIG_SERVER_IP, MONGOS_IP=$MONGOS_IP, SHARD_IPS=$SHARD_IPS"
+        run: echo "Using CONFIG_SERVER_IP=${{ needs.deploy-infrastructure.outputs.config_server_ip }}, MONGOS_IP=${{ needs.deploy-infrastructure.outputs.mongos_ip }}, SHARD_IPS=${{ needs.deploy-infrastructure.outputs.shard_ips }}"
+
 
       - name: Install MongoDB Client
         run: |
-          echo '[mongodb-org-8.0]' | sudo tee /etc/yum.repos.d/mongodb-org-8.0.repo
-          echo 'name=MongoDB Repository' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-          echo 'baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/8.0/x86_64/' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-          echo 'gpgcheck=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-          echo 'enabled=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-          echo 'gpgkey=https://pgp.mongodb.com/server-8.0.asc' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
-          sudo dnf install -y mongodb-org mongodb-mongosh-shared-openssl3 openssl mongodb-org-database-tools-extra mongodb-database-tools mongodb-org-tools mongodb-org-server mongodb-org-mongos mongodb-org-database jq
-          sudo rm -f /tmp/mongodb-27017.sock
-          sudo chown -R mongod:mongod /var/lib/mongo
-          sudo chown -R mongod:mongod /var/log/mongodb
-          sudo chmod 700 /var/lib/mongo
-          sudo chmod 700 /var/log/mongodb
+          wget -qO - https://www.mongodb.org/static/pgp/server-8.0.asc | sudo apt-key add -
+          echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+          sudo apt-get update
+          sudo apt-get install -y mongodb-org jq
           sudo systemctl enable mongod
           sudo systemctl start mongod
           
@@ -121,10 +113,11 @@ jobs:
     if: always()
 
     steps:
-      - name: Download Terraform State
+      - name: Download Terraform Files
         uses: actions/download-artifact@v3
         with:
-          name: terraform-state
+          name: terraform-files
+
 
       - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
@@ -139,6 +132,10 @@ jobs:
         with:
           terraform_version: 1.5.0
           terraform_wrapper: false
+
+      - name: Initialize Terraform
+        run: terraform init
+
 
       - name: Destroy Terraform Resources
         run: terraform destroy -auto-approve
