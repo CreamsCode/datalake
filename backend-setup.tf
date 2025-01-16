@@ -22,8 +22,7 @@ resource "null_resource" "create_bucket_and_upload" {
         echo "El bucket ${var.bucket_name} ya existe. No se necesita crear nuevamente."
       else
         echo "Creando el bucket ${var.bucket_name}..."
-        aws s3api create-bucket --bucket ${var.bucket_name} --region ${var.region} --create-bucket-configuration LocationConstraint=${var.region}
-        aws s3api put-bucket-versioning --bucket ${var.bucket_name} --versioning-configuration Status=Enabled
+        aws s3api create-bucket --bucket ${var.bucket_name} --region ${var.region}
       fi
     EOT
   }
