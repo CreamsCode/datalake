@@ -22,27 +22,32 @@ def main(queue_url, region_name, ip, db_name):
 
     logging.info("Escuchando mensajes en la cola SQS...")
 
-    while True:
-        try:
-            # Recibir mensajes de SQS
-            messages = sqs_manager.receive_messages()
+    try:
+        while True:
+            try:
+                # Recibir mensajes de SQS
+                messages = sqs_manager.receive_messages()
 
-            if not messages:
-                logging.info("No se recibieron mensajes. Esperando...")
-                continue
+                if not messages:
+                    logging.info("No se recibieron mensajes. Esperando...")
+                    continue
 
-            for message in messages:
-                # Procesar cada mensaje
-                logging.info(f"Procesando mensaje: {message['MessageId']}")
-                message_processor.process_message(message["Body"])
+                for message in messages:
+                    # Procesar cada mensaje
+                    logging.info(f"Procesando mensaje: {message['MessageId']}")
+                    message_processor.process_message(message["Body"])
 
-                # Eliminar el mensaje de SQS
-                sqs_manager.delete_message(message["ReceiptHandle"])
+                    # Eliminar el mensaje de SQS
+                    sqs_manager.delete_message(message["ReceiptHandle"])
 
-        except Exception as e:
-            logging.error(f"Error durante la ejecución: {e}")
-        finally:
-            mongo_manager.close()
+            except Exception as e:
+                logging.error(f"Error durante la ejecución: {e}")
+    except KeyboardInterrupt:
+        logging.info("Interrumpido manualmente. Cerrando conexión...")
+    finally:
+        # Asegurarse de cerrar MongoDB cuando el programa termine
+        mongo_manager.close()
+
 
 if __name__ == "__main__":
     # Argumentos de línea de comandos
