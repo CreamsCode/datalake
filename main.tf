@@ -7,7 +7,7 @@ resource "aws_vpc" "main_vpc" {
 
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.main_vpc.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
   tags = {
@@ -132,10 +132,33 @@ resource "aws_instance" "listener" {
   user_data = <<-EOF
     #!/bin/bash
     sudo yum update -y
-    sudo yum install -y git python3-pip
-    git clone https://github.com/LOS-CREMA/datalake /home/ec2-user/datalake
+    sudo yum install -y git python3-pip aws-cli
+    sudo pip3 install --upgrade pip
+    export SQS_QUEUE_URL=$(aws ssm get-parameter --name "sqs_queue_url" --query "Parameter.Value" --output text --region us-east-1)
+    export MONGODB_IP=$(aws ssm get-parameter --name "mongodb_ip" --query "Parameter.Value" --output text --region us-east-1)
+    git clone https://github.com/LOS-CREMA/datalake-builder /home/ec2-user/datalake
     cd /home/ec2-user/datalake
     pip3 install -r requirements.txt
-    python3 main.py
+    python3 main.py --queue_url $SQS_QUEUE_URL --ip $MONGODB_IP
   EOF
 }
+
+output "mongodb_server_public_ip" {
+  value       = aws_instance.mongodb_server.public_ip
+  description = "Public IP of the MongoDB server"
+}
+
+output "listener_public_ip" {
+  value       = aws_instance.listener.public_ip
+  description = "Public IP of the Listener instance"
+}
+
+resource "aws_ssm_parameter" "mongodb_ip" {
+  name  = "mongodb_ip"
+  type  = "String"
+  value = aws_instance.mongodb_server.public_ip
+  tags = {
+    Name = "MongoDBServerIP"
+  }
+}
+
