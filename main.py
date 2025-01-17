@@ -57,6 +57,6 @@ if __name__ == "__main__":
     main(
         queue_url=args.queue_url,
         region_name=args.region_name,
-        ip=args.mongo_uri,
+        ip=args.ip,
         db_name=args.db_name
     )
