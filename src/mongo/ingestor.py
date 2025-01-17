@@ -1,4 +1,4 @@
-from .models import Word, WordUsage
+from src.mongo.models import Word, WordUsage
 
 class DataIngestor:
     def __init__(self, connection_manager):

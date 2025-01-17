@@ -1,8 +1,8 @@
 from pymongo import MongoClient
 
 class MongoDBConnectionManager:
-    def __init__(self, uri: str = "mongodb://localhost:27017/", db_name: str = "word_analysis"):
-        self.uri = uri
+    def __init__(self, ip, db_name: str = "word_analysis"):
+        self.uri = f"mongodb://{ip}:27017/"
         self.db_name = db_name
         self.client = None
         self.db = None
