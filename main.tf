@@ -122,6 +122,7 @@ resource "aws_instance" "mongodb_server" {
     echo 'enabled=1' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
     echo 'gpgkey=https://pgp.mongodb.com/server-8.0.asc' | sudo tee -a /etc/yum.repos.d/mongodb-org-8.0.repo
     dnf install -y mongodb-org mongodb-mongosh-shared-openssl3 openssl mongodb-org-database-tools-extra mongodb-database-tools mongodb-org-tools mongodb-org-server mongodb-org-mongos mongodb-org-database jq
+    sudo sed -i 's/^  bindIp: .*/  bindIp: 0.0.0.0/' /etc/mongod.conf
     sudo rm -f /tmp/mongodb-27017.sock
     sudo chown -R mongod:mongod /var/lib/mongo
     sudo chown -R mongod:mongod /var/log/mongodb
