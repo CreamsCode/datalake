@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("--queue_url", required=True, help="URL de la cola SQS")
     parser.add_argument("--region_name", default="us-east-1", help="Región de AWS")
     parser.add_argument("--ip", default="localhost", help="IP de MongoDB")
-    parser.add_argument("--db_name", default="word_analysis", help="Nombre de la base de datos MongoDB")
+    parser.add_argument("--db_name", default="graph_words_db", help="Nombre de la base de datos MongoDB")
     args = parser.parse_args()
 
     # Ejecutar el listener
