@@ -5,14 +5,14 @@ from src.queue.messageprocessor import MessageProcessor
 from src.mongo.connection import MongoDBConnectionManager
 from src.mongo.ingestor import DataIngestor
 
-def main(queue_url, region_name, mongo_uri, db_name):
+def main(queue_url, region_name, ip, db_name):
     # Configuración de logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     logging.info("Iniciando el listener de SQS...")
 
     # Inicializar la conexión a MongoDB
-    mongo_manager = MongoDBConnectionManager(uri=mongo_uri, db_name=db_name)
+    mongo_manager = MongoDBConnectionManager(ip=ip, db_name=db_name)
     mongo_manager.connect()
     data_ingestor = DataIngestor(mongo_manager)
 
@@ -57,6 +57,6 @@ if __name__ == "__main__":
     main(
         queue_url=args.queue_url,
         region_name=args.region_name,
-        mongo_uri=args.mongo_uri,
+        ip=args.mongo_uri,
         db_name=args.db_name
     )
