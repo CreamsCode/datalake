@@ -134,9 +134,14 @@ resource "aws_instance" "listener" {
     sudo yum update -y
     sudo yum install -y git python3-pip aws-cli
     sudo pip3 install --upgrade pip
-    export SQS_QUEUE_URL=$(aws ssm get-parameter --name "sqs_queue_url" --query "Parameter.Value" --output text --region us-east-1)
-    export MONGODB_IP=$(aws ssm get-parameter --name "mongodb_ip" --query "Parameter.Value" --output text --region us-east-1)
-    git clone https://github.com/LOS-CREMA/datalake-builder /home/ec2-user/datalake
+    export SQS_QUEUE_URL="${var.sqs_queue_url}"
+    export MONGODB_IP=$(aws ec2 describe-instances \
+      --filters "Name=tag:Name,Values=MongoDB-Server" \
+      --query "Reservations[*].Instances[*].PublicIpAddress" \
+      --output text \
+      --region us-east-1)
+
+    sudo git clone https://github.com/LOS-CREMA/datalake-builder /home/ec2-user/datalake
     cd /home/ec2-user/datalake
     pip3 install -r requirements.txt
     python3 main.py --queue_url $SQS_QUEUE_URL --ip $MONGODB_IP
@@ -152,6 +157,12 @@ output "listener_public_ip" {
   value       = aws_instance.listener.public_ip
   description = "Public IP of the Listener instance"
 }
+
+variable "sqs_queue_url" {
+  description = "URL of the SQS Queue"
+  type        = string
+}
+
 
 resource "aws_ssm_parameter" "mongodb_ip" {
   name  = "mongodb_ip"
