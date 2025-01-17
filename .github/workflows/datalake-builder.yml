@@ -46,7 +46,7 @@ jobs:
 
       - name: Deploy DataLake with Terraform
         run: terraform apply -auto-approve \
-          -var "sqs_queue_url=${{ steps.get_sqs_url.outputs.sqs_queue_url }}"e
+          -var "sqs_queue_url=${{ steps.get_sqs_url.outputs.sqs_queue_url }}"
 
       - name: Debug Terraform Outputs
         run: terraform output
