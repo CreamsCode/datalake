@@ -1,8 +1,17 @@
+provider "aws" {
+  region = "us-east-1" # Cambia la región si es necesario
+}
+
 resource "aws_vpc" "main_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
     Name = "MainVPC"
   }
+}
+
+variable "sqs_queue_url" {
+  description = "URL of the SQS Queue"
+  type        = string
 }
 
 resource "aws_subnet" "public_subnet" {
@@ -140,7 +149,7 @@ resource "aws_instance" "listener" {
       --output text \
       --region us-east-1)
 
-    sudo git clone https://github.com/LOS-CREMA/datalake-builder.git /home/ec2-user/datalake
+    sudo git clone https://github.com/CreamsCode/datalake-builder.git /home/ec2-user/datalake
     cd /home/ec2-user/datalake
     pip3 install -r requirements.txt
     python3 main.py --queue_url $SQS_QUEUE_URL --ip $MONGODB_IP
@@ -157,18 +166,17 @@ output "listener_public_ip" {
   description = "Public IP of the Listener instance"
 }
 
-variable "sqs_queue_url" {
-  description = "URL of the SQS Queue"
-  type        = string
-}
-
-
 resource "aws_ssm_parameter" "mongodb_ip" {
   name  = "mongodb_ip"
   type  = "String"
   value = aws_instance.mongodb_server.public_ip
-  tags = {
-    Name = "MongoDBServerIP"
-  }
+  overwrite = true
+}
+
+resource "aws_ssm_parameter" "listener_ip" {
+  name  = "listener_ip"
+  type  = "String"
+  value = aws_instance.listener.public_ip
+  overwrite = true
 }
 
