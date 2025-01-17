@@ -152,11 +152,12 @@ resource "aws_instance" "listener" {
       --query "Reservations[*].Instances[*].PublicIpAddress" \
       --output text \
       --region us-east-1)
-
+    sudo echo "MONGODB_IP=$MONGODB_IP"
+    sudo echo "SQS_QUEUE_URL=$SQS_QUEUE_URL"
     sudo git clone https://github.com/CreamsCode/datalake-builder.git /home/ec2-user/datalake
     cd /home/ec2-user/datalake
-    pip3 install -r requirements.txt
-    python3 main.py --queue_url $SQS_QUEUE_URL --ip $MONGODB_IP
+    sudo pip3 install -r requirements.txt
+    sudo python3 main.py --queue_url ${var.sqs_queue_url} --ip ${aws_instance.mongodb_server.public_ip}
   EOF
 }
 
