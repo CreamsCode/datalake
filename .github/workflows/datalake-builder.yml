@@ -29,13 +29,6 @@ jobs:
           aws-session-token: ${{ github.event.inputs.aws_session_token }}
           aws-region: us-east-1
 
-      - name: Get SQS Queue URL from Parameter Store
-        id: get_sqs_url
-        run: |
-          export SQS_QUEUE_URL=$(aws ssm get-parameter --name "sqs_queue_url" --query "Parameter.Value" --output text --region us-east-1)
-          echo "SQS_QUEUE_URL=$SQS_QUEUE_URL"
-          echo "::set-output name=sqs_queue_url::$SQS_QUEUE_URL"
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -45,8 +38,11 @@ jobs:
         run: terraform init
 
       - name: Deploy DataLake with Terraform
-        run: terraform apply -auto-approve \
-          -var "sqs_queue_url=${{ steps.get_sqs_url.outputs.sqs_queue_url }}"
+        run: |
+          export SQS_QUEUE_URL=$(aws ssm get-parameter --name "sqs_queue_url" --query "Parameter.Value" --output text --region us-east-1)
+          echo "SQS Queue URL: $SQS_QUEUE_URL"
+          terraform apply -auto-approve -var="sqs_queue_url=$SQS_QUEUE_URL"
+      
 
       - name: Debug Terraform Outputs
         run: terraform output
