@@ -14,7 +14,7 @@ variable "sqs_queue_url" {
   type        = string
 }
 
-resource "aws_subnet" "public_subnet" {
+resource "aws_subnet" "mongodb_subnet" {
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
@@ -43,7 +43,7 @@ resource "aws_route_table" "public_route_table" {
 }
 
 resource "aws_route_table_association" "public_subnet_association" {
-  subnet_id      = aws_subnet.public_subnet.id
+  subnet_id      = aws_subnet.mongodb_subnet.id
   route_table_id = aws_route_table.public_route_table.id
 }
 
@@ -58,7 +58,7 @@ resource "aws_security_group" "mongodb_cluster" {
     from_port   = 27017
     to_port     = 27019
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.public_subnet.cidr_block]
+    cidr_blocks = [aws_subnet.mongodb_subnet.cidr_block]
   }
 
   ingress {
@@ -99,11 +99,15 @@ resource "aws_security_group" "listener_security" {
   }
 }
 
+resource "aws_sqs_queue" "scraper_queue" {
+  name = "scraper-queue"
+}
+
 resource "aws_instance" "mongodb_server" {
   ami           = "ami-05576a079321f21f8"
   instance_type = "t2.micro"
   key_name      = "vockey"
-  subnet_id     = aws_subnet.public_subnet.id
+  subnet_id     = aws_subnet.mongodb_subnet.id
   vpc_security_group_ids = [aws_security_group.mongodb_cluster.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
@@ -132,7 +136,7 @@ resource "aws_instance" "listener" {
   ami           = "ami-05576a079321f21f8"
   instance_type = "t2.micro"
   key_name      = "vockey"
-  subnet_id     = aws_subnet.public_subnet.id
+  subnet_id     = aws_subnet.mongodb_subnet.id
   vpc_security_group_ids = [aws_security_group.listener_security.id]
   iam_instance_profile   = "EMR_EC2_DefaultRole"
   tags = {
