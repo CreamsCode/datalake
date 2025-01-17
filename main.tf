@@ -58,7 +58,7 @@ resource "aws_security_group" "mongodb_cluster" {
     from_port   = 27017
     to_port     = 27019
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.mongodb_subnet.cidr_block]
+    cidr_blocks = ["0.0.0.0/16"]
   }
 
   ingress {
