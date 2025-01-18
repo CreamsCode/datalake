@@ -2,11 +2,8 @@ provider "aws" {
   region = "us-east-1" # Cambia la región si es necesario
 }
 
-resource "aws_vpc" "main_vpc" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "MainVPC"
-  }
+data "aws_ssm_parameter" "vpc_id" {
+  name = "/shared/vpc/id"
 }
 
 variable "sqs_queue_url" {
@@ -15,24 +12,24 @@ variable "sqs_queue_url" {
 }
 
 resource "aws_subnet" "mongodb_subnet" {
-  vpc_id                  = aws_vpc.main_vpc.id
+  vpc_id                  = data.aws_ssm_parameter.vpc_id.value
   cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
   tags = {
-    Name = "PublicSubnet"
+    Name = "MongoDB Subnet"
   }
 }
 
 resource "aws_internet_gateway" "internet_gateway" {
-  vpc_id = aws_vpc.main_vpc.id
+  vpc_id = data.aws_ssm_parameter.vpc_id.value
   tags = {
     Name = "InternetGateway"
   }
 }
 
 resource "aws_route_table" "public_route_table" {
-  vpc_id = aws_vpc.main_vpc.id
+  vpc_id = data.aws_ssm_parameter.vpc_id.value
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.internet_gateway.id
@@ -48,7 +45,7 @@ resource "aws_route_table_association" "public_subnet_association" {
 }
 
 resource "aws_security_group" "mongodb_cluster" {
-  vpc_id = aws_vpc.main_vpc.id
+  vpc_id = data.aws_ssm_parameter.vpc_id.value
   tags = {
     Name = "MongoDBSecurityGroup"
   }
@@ -78,7 +75,7 @@ resource "aws_security_group" "mongodb_cluster" {
 }
 
 resource "aws_security_group" "listener_security" {
-  vpc_id = aws_vpc.main_vpc.id
+  vpc_id = data.aws_ssm_parameter.vpc_id.value
   tags = {
     Name = "ListenerSecurityGroup"
   }
