@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1" # Cambia la región si es necesario
+  region = "us-east-1"
 }
 
 data "aws_ssm_parameter" "vpc_id" {
