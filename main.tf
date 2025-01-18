@@ -6,6 +6,14 @@ data "aws_ssm_parameter" "vpc_id" {
   name = "/shared/vpc/id"
 }
 
+data "aws_ssm_parameter" "igw_id" {
+  name = "/shared/vpc/igw_id"
+}
+
+data "aws_ssm_parameter" "route_table_id" {
+  name = "/shared/vpc/route_table_id"
+}
+
 variable "sqs_queue_url" {
   description = "URL of the SQS Queue"
   type        = string
@@ -21,27 +29,9 @@ resource "aws_subnet" "mongodb_subnet" {
   }
 }
 
-resource "aws_internet_gateway" "internet_gateway" {
-  vpc_id = data.aws_ssm_parameter.vpc_id.value
-  tags = {
-    Name = "InternetGateway"
-  }
-}
-
-resource "aws_route_table" "public_route_table" {
-  vpc_id = data.aws_ssm_parameter.vpc_id.value
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.internet_gateway.id
-  }
-  tags = {
-    Name = "PublicRouteTable"
-  }
-}
-
 resource "aws_route_table_association" "public_subnet_association" {
   subnet_id      = aws_subnet.mongodb_subnet.id
-  route_table_id = aws_route_table.public_route_table.id
+  route_table_id = data.aws_ssm_parameter.route_table_id.value
 }
 
 resource "aws_security_group" "mongodb_cluster" {
